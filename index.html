@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Cartoonize Demo - WebNN/WebGPU/WASM</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                text-align: center;
+                background: #f7f7f7;
+            }
+            canvas {
+                margin: 10px;
+                border: 1px solid #ccc;
+            }
+        </style>
+        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0-dev.20240311-5479124834/dist/ort.webgpu.min.js" ></script>
+    </head>
+    <body>
+        <h2>Cartoonize Image (WebNN → WebGPU → WASM)</h2>
+        <input type="file" id="upload" accept="image/*" />
+        <br />
+        <canvas id="inputCanvas"></canvas>
+        <canvas id="outputCanvas"></canvas>
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>
