@@ -172,7 +172,15 @@ export function resizeWithPadding(
 export function tensorToImageWithoutPadding(
     tensor: ort.Tensor,
     originalImage: HTMLImageElement,
-    paddingInfo?: any
+    paddingInfo?: any,
+    options?: {
+        colorOrder?: "RGB" | "BGR";
+        clamp01?: boolean;
+        outputRange?: 'auto' | '0-1' | '-1-1' | '0-255';
+        outputScale?: number;  // 输出缩放因子，用于压缩异常范围
+        channelScales?: [number, number, number];  // RGB/BGR通道独立缩放
+        channelOffsets?: [number, number, number]; // RGB/BGR通道独立偏移
+    }
 ): HTMLCanvasElement {
     const [_, __, h, w] = tensor.dims;
     const data = tensor.data as Float32Array;
@@ -189,32 +197,121 @@ export function tensorToImageWithoutPadding(
     // 检查tensor的维度格式
     const [, dim1] = tensor.dims;
     console.log("tensor维度:", tensor.dims);
+    const colorOrder = options?.colorOrder || "RGB";
+    const clamp01 = options?.clamp01 ?? false;
+    const outputRange = options?.outputRange || 'auto';
+    const outputScale = options?.outputScale ?? 1.0;
+    const channelScales = options?.channelScales ?? [1, 1, 1];
+    const channelOffsets = options?.channelOffsets ?? [0, 0, 0];
+
+    // 粗略检测输出范围: 0-1 / -1-1 / 0-255
+    const sampleCount = Math.min(10000, (data as any).length);
+    let localMin = Number.POSITIVE_INFINITY;
+    let localMax = Number.NEGATIVE_INFINITY;
+    for (let i = 0; i < sampleCount; i++) {
+        const v = (data as any)[i] as number;
+        if (Number.isFinite(v)) {
+            if (v < localMin) localMin = v;
+            if (v > localMax) localMax = v;
+        }
+    }
+    type RangeType = '0-1' | '-1-1' | '0-255';
+    let rangeType: RangeType = '0-1';
+    if (outputRange === 'auto') {
+        if (localMin >= -1.5 && localMax <= 1.5 && (localMin < 0 || localMax <= 1.2)) {
+            rangeType = localMin < 0 ? '-1-1' : '0-1';
+        } else if (localMax > 2.0 && localMax <= 300 && localMin >= -10) {
+            // 排除巨大离群值时误判
+            rangeType = '0-255';
+        } else {
+            // 默认按0-1处理以避免全黑
+            rangeType = '0-1';
+        }
+    } else if (outputRange === '0-1' || outputRange === '-1-1' || outputRange === '0-255') {
+        rangeType = outputRange;
+    }
+
+    const to255 = (v: number, channel: 0 | 1 | 2) => {
+        let x = v;
+        // 先应用通道独立缩放和偏移
+        x = x * channelScales[channel] + channelOffsets[channel];
+        // 再应用全局缩放
+        x = x * outputScale;
+        if (rangeType === '-1-1') x = x * 0.5 + 0.5;
+        else if (rangeType === '0-255') return Math.max(0, Math.min(255, x));
+        if (clamp01) x = Math.max(0, Math.min(1, x));
+        return x * 255;
+    };
 
     if (dim1 === 1) {
         // 单通道（灰度）图像: [N, 1, H, W]
         for (let i = 0; i < w * h; i++) {
-            const gray = data[i] * 255;
-            imageData.data[i * 4] = gray; // R
-            imageData.data[i * 4 + 1] = gray; // G
-            imageData.data[i * 4 + 2] = gray; // B
+            const grayValue = to255(data[i], 0); // 灰度值用0通道的处理
+            imageData.data[i * 4] = grayValue; // R
+            imageData.data[i * 4 + 1] = grayValue; // G
+            imageData.data[i * 4 + 2] = grayValue; // B
             imageData.data[i * 4 + 3] = 255; // A
         }
     } else if (dim1 === 3) {
-        // RGB图像: [N, 3, H, W] - 通道在前
-        for (let i = 0; i < w * h; i++) {
-            imageData.data[i * 4] = data[i] * 255; // R
-            imageData.data[i * 4 + 1] = data[i + w * h] * 255; // G
-            imageData.data[i * 4 + 2] = data[i + 2 * w * h] * 255; // B
-            imageData.data[i * 4 + 3] = 255; // A
+        // [N, 3, H, W] - 通道在前
+        const planeSize = w * h;
+        // 调试：统计每个通道的范围和均值
+        let rMin = Infinity, rMax = -Infinity, gMin = Infinity, gMax = -Infinity, bMin = Infinity, bMax = -Infinity;
+        let rSum = 0, gSum = 0, bSum = 0;
+        for (let i = 0; i < planeSize; i++) {
+            const c0 = (data as any)[i] as number;
+            const c1 = (data as any)[i + planeSize] as number;
+            const c2 = (data as any)[i + 2 * planeSize] as number;
+            // 按当前 colorOrder 推断 r,g,b 属于哪个通道
+            const rVal = colorOrder === "BGR" ? c2 : c0;
+            const gVal = c1;
+            const bVal = colorOrder === "BGR" ? c0 : c2;
+            if (rVal < rMin) rMin = rVal; if (rVal > rMax) rMax = rVal; rSum += rVal;
+            if (gVal < gMin) gMin = gVal; if (gVal > gMax) gMax = gVal; gSum += gVal;
+            if (bVal < bMin) bMin = bVal; if (bVal > bMax) bMax = bVal; bSum += bVal;
+        }
+        const denom = planeSize || 1;
+        console.log("输出通道统计(NCHW,", colorOrder, "):",
+            { R: { min: rMin, max: rMax, mean: rSum / denom }, G: { min: gMin, max: gMax, mean: gSum / denom }, B: { min: bMin, max: bMax, mean: bSum / denom }, rangeType });
+        for (let i = 0; i < planeSize; i++) {
+            if (colorOrder === "BGR") {
+                const b = (data as any)[i] as number;
+                const g = (data as any)[i + planeSize] as number;
+                const r = (data as any)[i + 2 * planeSize] as number;
+                imageData.data[i * 4] = to255(r, 0);
+                imageData.data[i * 4 + 1] = to255(g, 1);
+                imageData.data[i * 4 + 2] = to255(b, 2);
+            } else {
+                const r = (data as any)[i] as number;
+                const g = (data as any)[i + planeSize] as number;
+                const b = (data as any)[i + 2 * planeSize] as number;
+                imageData.data[i * 4] = to255(r, 0);
+                imageData.data[i * 4 + 1] = to255(g, 1);
+                imageData.data[i * 4 + 2] = to255(b, 2);
+            }
+            imageData.data[i * 4 + 3] = 255;
         }
     } else {
-        // 格式: [N, H, W, C] - 通道在后
-        for (let i = 0; i < w * h; i++) {
-            imageData.data[i * 4] = data[i * 3] * 255; // R
-            imageData.data[i * 4 + 1] = data[i * 3 + 1] * 255; // G
-            imageData.data[i * 4 + 2] = data[i * 3 + 2] * 255; // B
-            imageData.data[i * 4 + 3] = 255; // A
+        // NHWC: [N, H, W, C]，也统计一下并渲染
+        const planeSize = w * h;
+        let rMin = Infinity, rMax = -Infinity, gMin = Infinity, gMax = -Infinity, bMin = Infinity, bMax = -Infinity;
+        let rSum = 0, gSum = 0, bSum = 0;
+        for (let i = 0; i < planeSize; i++) {
+            const base = i * 3;
+            const r = (data as any)[base] as number;
+            const g = (data as any)[base + 1] as number;
+            const b = (data as any)[base + 2] as number;
+            if (r < rMin) rMin = r; if (r > rMax) rMax = r; rSum += r;
+            if (g < gMin) gMin = g; if (g > gMax) gMax = g; gSum += g;
+            if (b < bMin) bMin = b; if (b > bMax) bMax = b; bSum += b;
+                imageData.data[i * 4] = to255(r, 0);
+                imageData.data[i * 4 + 1] = to255(g, 1);
+                imageData.data[i * 4 + 2] = to255(b, 2);
+                imageData.data[i * 4 + 3] = 255;
         }
+        const denom = planeSize || 1;
+        console.log("输出通道统计(NHWC):",
+            { R: { min: rMin, max: rMax, mean: rSum / denom }, G: { min: gMin, max: gMax, mean: gSum / denom }, B: { min: bMin, max: bMax, mean: bSum / denom }, rangeType });
     }
 
     tempCtx.putImageData(imageData, 0, 0);
@@ -349,7 +446,15 @@ export function denormalizeImageData(
 
 export function imageToTensor(
     img: HTMLImageElement,
-    targetShape: [number, number, number, number]
+    targetShape: [number, number, number, number],
+    options?: {
+        colorOrder?: "RGB" | "BGR";
+        // 将[0,255]缩放到[0,1]
+        scaleTo01?: boolean;
+        // 可选：按通道减均值除以方差（PyTorch风格）
+        mean?: [number, number, number];
+        std?: [number, number, number];
+    }
 ): { tensor: ort.Tensor; paddingInfo: any } | null {
     if (!img || !targetShape) return null;
 
@@ -362,60 +467,40 @@ export function imageToTensor(
 
     // 计算正确的数据长度
     const totalElements = batch * channels * height * width;
+    const colorOrder = options?.colorOrder || "RGB";
+    const scaleTo01 = options?.scaleTo01 ?? true;
+    const mean = options?.mean;
+    const std = options?.std;
     const float32Data = new Float32Array(totalElements);
 
-    if (channels === 12) {
-        // 12通道的特殊处理 - Real-ESRGAN可能需要特定的输入格式
-        // 通常包括: RGB + RGB的梯度 + 其他特征
+    const denom = scaleTo01 ? 255.0 : 1.0;
+    if (colorOrder === "BGR") {
         for (let i = 0; i < width * height; i++) {
-            const r = data[i * 4] / 255.0;
-            const g = data[i * 4 + 1] / 255.0;
-            const b = data[i * 4 + 2] / 255.0;
-            
-            const baseIndex = i;
-            const channelSize = width * height;
-            
-            // 前3个通道: RGB
-            float32Data[baseIndex] = r;
-            float32Data[baseIndex + channelSize] = g;
-            float32Data[baseIndex + 2 * channelSize] = b;
-            
-            // 计算梯度特征 (简单的Sobel算子)
-            const x = i % width;
-            const y = Math.floor(i / width);
-            
-            // 计算x方向梯度
-            const gradX_r = x > 0 ? (data[(i-1) * 4] - data[i * 4]) / 255.0 : 0;
-            const gradX_g = x > 0 ? (data[(i-1) * 4 + 1] - data[i * 4 + 1]) / 255.0 : 0;
-            const gradX_b = x > 0 ? (data[(i-1) * 4 + 2] - data[i * 4 + 2]) / 255.0 : 0;
-            
-            // 计算y方向梯度
-            const gradY_r = y > 0 ? (data[(i-width) * 4] - data[i * 4]) / 255.0 : 0;
-            const gradY_g = y > 0 ? (data[(i-width) * 4 + 1] - data[i * 4 + 1]) / 255.0 : 0;
-            const gradY_b = y > 0 ? (data[(i-width) * 4 + 2] - data[i * 4 + 2]) / 255.0 : 0;
-            
-            // 通道3-5: RGB的x方向梯度
-            float32Data[baseIndex + 3 * channelSize] = gradX_r;
-            float32Data[baseIndex + 4 * channelSize] = gradX_g;
-            float32Data[baseIndex + 5 * channelSize] = gradX_b;
-            
-            // 通道6-8: RGB的y方向梯度
-            float32Data[baseIndex + 6 * channelSize] = gradY_r;
-            float32Data[baseIndex + 7 * channelSize] = gradY_g;
-            float32Data[baseIndex + 8 * channelSize] = gradY_b;
-            
-            // 通道9-11: 其他特征（亮度、对比度等）
-            const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-            float32Data[baseIndex + 9 * channelSize] = luminance;
-            float32Data[baseIndex + 10 * channelSize] = Math.sqrt(gradX_r * gradX_r + gradX_g * gradX_g + gradX_b * gradX_b);
-            float32Data[baseIndex + 11 * channelSize] = Math.sqrt(gradY_r * gradY_r + gradY_g * gradY_g + gradY_b * gradY_b);
+            let b = data[i * 4 + 2] / denom;
+            let g = data[i * 4 + 1] / denom;
+            let r = data[i * 4] / denom;
+            if (mean && std) {
+                r = (r - mean[0]) / std[0];
+                g = (g - mean[1]) / std[1];
+                b = (b - mean[2]) / std[2];
+            }
+            float32Data[i] = b;
+            float32Data[i + width * height] = g;
+            float32Data[i + 2 * width * height] = r;
         }
     } else {
-        // 标准3通道处理
         for (let i = 0; i < width * height; i++) {
-            float32Data[i] = data[i * 4] / 255.0; // R
-            float32Data[i + width * height] = data[i * 4 + 1] / 255.0; // G
-            float32Data[i + 2 * width * height] = data[i * 4 + 2] / 255.0; // B
+            let r = data[i * 4] / denom;
+            let g = data[i * 4 + 1] / denom;
+            let b = data[i * 4 + 2] / denom;
+            if (mean && std) {
+                r = (r - mean[0]) / std[0];
+                g = (g - mean[1]) / std[1];
+                b = (b - mean[2]) / std[2];
+            }
+            float32Data[i] = r;
+            float32Data[i + width * height] = g;
+            float32Data[i + 2 * width * height] = b;
         }
     }
 

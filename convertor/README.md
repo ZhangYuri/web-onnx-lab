@@ -24,7 +24,7 @@ pip install -r requirements.txt
 
 ### 使用方法
 
-1. **准备模型文件**：将你的PyTorch模型文件放在项目根目录
+1. [**准备模型文件**](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.1.0/RealESRGAN_x4plus.pth)：将你的PyTorch模型文件放在项目根目录
 2. **运行转换**：
    ```bash
    uv run python toOnnx.py
