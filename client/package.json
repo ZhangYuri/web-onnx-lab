@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup-env": "node setup-env.cjs"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
