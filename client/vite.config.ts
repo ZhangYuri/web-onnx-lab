@@ -22,7 +22,7 @@ export default defineConfig({
         },
     ],
     server: {
-        host: "yuri.iqiyi.com",
+        host: "yuri.localhost.com",
         port: 443,
         https: {
             key: fs.readFileSync(

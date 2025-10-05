@@ -18,17 +18,37 @@
 
 ## 安装步骤
 
-1. 创建虚拟环境（推荐）：
+1. 安装python
+```bash
+uv python pin 3.11
+```
+
+2. 查看所有python版本
+```bash
+uv python list
+```
+
+3. 卸载python
+```bash
+uv python uninstall 3.10
+```
+
+4. 切换python版本
+```bash
+uv python pin 3.11
+```
+
+5. 创建虚拟环境（推荐）：
 ```bash
 uv venv
 ```
 
-2. 安装依赖：
+6. 安装依赖：
 ```bash
 uv pip install -r requirements.txt
 ```
 
-3. 配置环境变量：
+7. 配置环境变量：
 复制 .env.example 文件并重命名为 .env，根据需要修改配置。
 
 ## 运行服务
@@ -36,7 +56,7 @@ uv pip install -r requirements.txt
 在项目根目录下运行：
 ```bash
 cd src
-python main.py
+uv run main.py
 ```
 
 服务将在 http://localhost:8000 启动。
@@ -51,6 +71,6 @@ python main.py
 
 - `GET /`: 欢迎页面
 - `GET /health`: 健康检查
-- `POST /api/v1/image/super-resolution`: 图像超分辨率处理
-- `POST /api/v1/image/cartoonize`: 图像卡通化处理
-- `POST /api/v1/image/style-transfer`: 图像风格迁移
+- `POST /api/v1/image/doubao/generate`: seedream4.0 图像处理
+- `POST /api/v1/image/deepseek/summarize`: deepseek 接口
+- `POST /api/v1/image/tos/upload-from-file`: 图片云存储
