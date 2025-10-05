@@ -17,7 +17,19 @@
         <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0-dev.20240311-5479124834/dist/ort.webgpu.min.js" ></script>
     </head>
     <body>
-        <h2>Cartoonize Image (WebNN → WebGPU → WASM)</h2>
+        <h2>ONNX Web Lab</h2>
+        <div style="margin: 20px 0;">
+            <a href="text-to-image.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                🎨 文生图
+            </a>
+            <a href="superResolution.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #764ba2; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                🔍 超分辨率
+            </a>
+            <a href="video.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #f093fb; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
+                🎬 视频处理
+            </a>
+        </div>
+        <h3>Cartoonize Image (WebNN → WebGPU → WASM)</h3>
         <input type="file" id="upload" accept="image/*" />
         <br />
         <canvas id="inputCanvas"></canvas>
