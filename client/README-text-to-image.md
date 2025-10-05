@@ -31,9 +31,10 @@
 client/
 ├── text-to-image.html          # 主页面
 ├── src/
-│   ├── text-to-image.ts        # 主逻辑
+│   ├── textToImage.ts          # 主逻辑（支持小说生图）
 │   ├── api/
-│   │   └── textToImageApi.ts   # API服务
+│   │   ├── textToImageApi.ts   # 豆包文生图API服务
+│   │   └── deepSeekApi.ts      # DeepSeek文本分析API服务
 │   └── components/
 │       └── ui.ts               # UI组件
 ```

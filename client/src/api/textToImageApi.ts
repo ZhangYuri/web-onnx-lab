@@ -31,9 +31,17 @@ export interface ApiError {
 }
 
 export class TextToImageApiService {
-    private readonly baseUrl = 'https://ark.cn-beijing.volces.com/api/v3/images/generations';
-    private readonly apiKey = '9554ff5c-ea84-4416-bc31-3cc3623abaa5';
-    private readonly defaultModel = 'doubao-seedream-4-0-250828';
+    private readonly proxyBaseUrl: string;
+    private readonly defaultModel: string;
+
+    constructor() {
+        // 前端改为请求后端代理，避免CORS与密钥暴露
+        this.proxyBaseUrl = import.meta.env.VITE_DOUBAO_BASE_URL
+            ? `${import.meta.env.VITE_DOUBAO_BASE_URL}/api/v1/proxy/doubao/generate`
+            : `/api/v1/proxy/doubao/generate`;
+
+        this.defaultModel = import.meta.env.VITE_DOUBAO_MODEL || 'doubao-seedream-4-0-250828';
+    }
 
     /**
      * 生成图像
@@ -63,11 +71,10 @@ export class TextToImageApiService {
         }
 
         try {
-            const response = await fetch(this.baseUrl, {
+            const response = await fetch(this.proxyBaseUrl, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.apiKey}`
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(requestData)
             });

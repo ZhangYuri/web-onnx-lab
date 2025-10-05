@@ -81,7 +81,7 @@ export class UIComponents {
      */
     static updateImagePreview(imageUrl: string, container: HTMLElement, title: string = '生成的图像'): void {
         const previewImage = container.querySelector('.preview-image') as HTMLElement;
-        
+
         if (previewImage) {
             previewImage.innerHTML = `
                 <img src="${imageUrl}" alt="${title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;" />
@@ -95,7 +95,7 @@ export class UIComponents {
      */
     static resetImagePreview(container: HTMLElement): void {
         const previewImage = container.querySelector('.preview-image') as HTMLElement;
-        
+
         if (previewImage) {
             previewImage.innerHTML = `
                 <div class="placeholder">

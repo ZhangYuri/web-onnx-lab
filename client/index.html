@@ -2,38 +2,112 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Cartoonize Demo - WebNN/WebGPU/WASM</title>
+        <title>AI Tools</title>
         <style>
+            * { box-sizing: border-box; }
             body {
-                font-family: sans-serif;
-                text-align: center;
-                background: #f7f7f7;
+                margin: 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                color: #1f2937;
+                background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%);
             }
-            canvas {
-                margin: 10px;
-                border: 1px solid #ccc;
+            .container {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 48px 24px 64px;
+            }
+            .hero {
+                text-align: center;
+                padding: 24px 0 8px;
+            }
+            .title {
+                margin: 0 0 8px;
+                font-size: 40px;
+                font-weight: 800;
+                letter-spacing: -0.02em;
+                background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 50%, #ec4899 100%);
+                -webkit-background-clip: text;
+                background-clip: text;
+                color: transparent;
+            }
+            .subtitle {
+                margin: 0;
+                color: #6b7280;
+                font-size: 16px;
+            }
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                gap: 20px;
+                margin-top: 36px;
+            }
+            .card {
+                display: block;
+                text-decoration: none;
+                color: inherit;
+                background: #fff;
+                border-radius: 16px;
+                border: 1px solid rgba(0,0,0,0.06);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.06);
+                padding: 20px;
+                transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+            }
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 14px 28px rgba(0,0,0,0.10);
+                border-color: rgba(79,70,229,0.35);
+            }
+            .card .icon {
+                width: 48px; height: 48px;
+                display: grid; place-items: center;
+                border-radius: 12px;
+                margin-bottom: 14px;
+                color: white;
+                font-size: 24px;
+                font-weight: 700;
+            }
+            .icon-purple { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+            .icon-pink { background: linear-gradient(135deg, #f472b6, #ec4899); }
+            .icon-amber { background: linear-gradient(135deg, #f59e0b, #f97316); }
+            .card h3 { margin: 0 0 8px; font-size: 18px; }
+            .card p { margin: 0; color: #6b7280; font-size: 14px; line-height: 1.5; }
+            .footer {
+                text-align: center;
+                margin-top: 36px;
+                color: #9ca3af;
+                font-size: 13px;
             }
         </style>
-        <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.18.0-dev.20240311-5479124834/dist/ort.webgpu.min.js" ></script>
     </head>
     <body>
-        <h2>ONNX Web Lab</h2>
-        <div style="margin: 20px 0;">
-            <a href="text-to-image.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
-                🎨 文生图
-            </a>
-            <a href="superResolution.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #764ba2; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
-                🔍 超分辨率
-            </a>
-            <a href="video.html" style="display: inline-block; margin: 10px; padding: 15px 30px; background: #f093fb; color: white; text-decoration: none; border-radius: 10px; font-weight: 600;">
-                🎬 视频处理
-            </a>
+        <div class="container">
+            <div class="hero">
+                <h1 class="title">Web AI Lab</h1>
+                <p class="subtitle">基于 Web 的 AI 多功能演示：文生图、超分、视频卡通化</p>
+            </div>
+
+            <div class="grid">
+                <a class="card" href="text-to-image.html">
+                    <div class="icon icon-purple">🎨</div>
+                    <h3>文生图 / 小说生图</h3>
+                    <p>输入文字或上传小说片段，一键生成高质量图像，支持参考图与尺寸选择。</p>
+                </a>
+
+                <a class="card" href="super-resolution.html">
+                    <div class="icon icon-pink">🔍</div>
+                    <h3>图像超分辨率</h3>
+                    <p>基于 RealESRGAN 的超分处理，放大图像同时尽量保持细节与质感。</p>
+                </a>
+
+                <a class="card" href="video.html">
+                    <div class="icon icon-amber">🎬</div>
+                    <h3>视频卡通化（实验）</h3>
+                    <p>逐帧处理视频以获得卡通风格效果，演示 Web 推理流程。</p>
+                </a>
+            </div>
+
+            <div class="footer">© 2025 Web AI Lab · Crafted with WebGPU / WASM</div>
         </div>
-        <h3>Cartoonize Image (WebNN → WebGPU → WASM)</h3>
-        <input type="file" id="upload" accept="image/*" />
-        <br />
-        <canvas id="inputCanvas"></canvas>
-        <canvas id="outputCanvas"></canvas>
-        <script type="module" src="/src/main.ts"></script>
+        <!-- <script type="module" src="/src/main.ts"></script> -->
     </body>
 </html>

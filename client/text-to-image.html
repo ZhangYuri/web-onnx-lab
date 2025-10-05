@@ -1,310 +1,369 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文生图 - AI图像生成</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>文生图 - AI图像生成</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            font-weight: 700;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            padding: 40px;
-        }
-
-        .input-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 2px solid #e9ecef;
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: #495057;
-            font-size: 1.1rem;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .textarea {
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .loading {
-            display: none;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #ffffff;
-            border-top: 2px solid transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .preview-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px;
-            border: 2px solid #e9ecef;
-        }
-
-        .preview-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .preview-item {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .preview-item h3 {
-            margin-bottom: 15px;
-            color: #495057;
-        }
-
-        .preview-image {
-            width: 100%;
-            max-width: 300px;
-            height: 300px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 2px solid #dee2e6;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6c757d;
-            font-size: 1.1rem;
-        }
-
-        .placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .placeholder-icon {
-            font-size: 3rem;
-            opacity: 0.5;
-        }
-
-        .error-message {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: 1px solid #f5c6cb;
-            display: none;
-        }
-
-        .success-message {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            border: 1px solid #c3e6cb;
-            display: none;
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
                 padding: 20px;
             }
-            
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 20px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+            }
+
+            .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+            }
+
             .header h1 {
-                font-size: 2rem;
+                font-size: 2.5rem;
+                margin-bottom: 10px;
+                font-weight: 700;
             }
-            
+
+            .header p {
+                font-size: 1.1rem;
+                opacity: 0.9;
+            }
+
+            .main-content {
+                padding: 40px;
+            }
+
+            .input-section {
+                background: #f8f9fa;
+                border-radius: 15px;
+                padding: 30px;
+                margin-bottom: 30px;
+                border: 2px solid #e9ecef;
+            }
+
+            .form-group {
+                margin-bottom: 25px;
+            }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 10px;
+                font-weight: 600;
+                color: #495057;
+                font-size: 1.1rem;
+            }
+
+            .form-control {
+                width: 100%;
+                padding: 15px;
+                border: 2px solid #dee2e6;
+                border-radius: 10px;
+                font-size: 1rem;
+                transition: all 0.3s ease;
+                background: white;
+            }
+
+            .form-control:focus {
+                outline: none;
+                border-color: #667eea;
+                box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            }
+
+            .textarea {
+                min-height: 120px;
+                resize: vertical;
+            }
+
+            .btn {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                border-radius: 10px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            }
+
+            .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+            .loading {
+                display: none;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .spinner {
+                width: 20px;
+                height: 20px;
+                border: 2px solid #ffffff;
+                border-top: 2px solid transparent;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+
+            @keyframes spin {
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
+            }
+
+            .preview-section {
+                background: #f8f9fa;
+                border-radius: 15px;
+                padding: 30px;
+                border: 2px solid #e9ecef;
+            }
+
             .preview-grid {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
             }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div style="position: absolute; top: 20px; left: 20px;">
-                <a href="index.html" style="color: white; text-decoration: none; font-size: 1.1rem; font-weight: 600;">
-                    ← 返回主页
-                </a>
+
+            .preview-item {
+                background: white;
+                border-radius: 10px;
+                padding: 20px;
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                text-align: center;
+            }
+
+            .preview-item h3 {
+                margin-bottom: 15px;
+                color: #495057;
+            }
+
+            .preview-image {
+                width: 100%;
+                max-width: 300px;
+                height: 300px;
+                object-fit: cover;
+                border-radius: 10px;
+                border: 2px solid #dee2e6;
+                background: #f8f9fa;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #6c757d;
+                font-size: 1.1rem;
+            }
+
+            .placeholder {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .placeholder-icon {
+                font-size: 3rem;
+                opacity: 0.5;
+            }
+
+            .error-message {
+                background: #f8d7da;
+                color: #721c24;
+                padding: 15px;
+                border-radius: 10px;
+                margin-top: 20px;
+                border: 1px solid #f5c6cb;
+                display: none;
+            }
+
+            .success-message {
+                background: #d4edda;
+                color: #155724;
+                padding: 15px;
+                border-radius: 10px;
+                margin-top: 20px;
+                border: 1px solid #c3e6cb;
+                display: none;
+            }
+
+            @media (max-width: 768px) {
+                .main-content {
+                    padding: 20px;
+                }
+
+                .header h1 {
+                    font-size: 2rem;
+                }
+
+                .preview-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div style="position: absolute; top: 20px; left: 20px">
+                    <a
+                        href="index.html"
+                        style="
+                            color: white;
+                            text-decoration: none;
+                            font-size: 1.1rem;
+                            font-weight: 600;
+                        "
+                    >
+                        ← 返回主页
+                    </a>
+                </div>
+                <h1>🎨 AI文生图</h1>
+                <p>输入文字描述，让AI为你生成精美的图像</p>
             </div>
-            <h1>🎨 AI文生图</h1>
-            <p>输入文字描述，让AI为你生成精美的图像</p>
-        </div>
-        
-        <div class="main-content">
-            <div class="input-section">
-                <div class="form-group">
-                    <label for="prompt">文字描述</label>
-                    <textarea 
-                        id="prompt" 
-                        class="form-control textarea" 
-                        placeholder="请描述你想要生成的图像，例如：一只可爱的小猫坐在花园里，阳光明媚，细节丰富"
-                        rows="4"
-                    ></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label for="imageUrl">参考图片URL（可选）</label>
-                    <input 
-                        type="url" 
-                        id="imageUrl" 
-                        class="form-control" 
-                        placeholder="https://example.com/image.jpg"
-                    />
-                </div>
-                
-                <div class="form-group">
-                    <label for="size">图片尺寸</label>
-                    <select id="size" class="form-control">
-                        <option value="1K">1K (1024x1024)</option>
-                        <option value="2K" selected>2K (2048x2048)</option>
-                        <option value="4K">4K (4096x4096)</option>
-                    </select>
-                </div>
-                
-                <button id="generateBtn" class="btn">
-                    <span class="btn-text">生成图像</span>
-                    <div class="loading">
-                        <div class="spinner"></div>
-                        <span>生成中...</span>
+            <div class="main-content">
+                <div class="input-section">
+                    <div class="form-group">
+                        <label for="prompt">文字描述</label>
+                        <textarea
+                            id="prompt"
+                            class="form-control textarea"
+                            placeholder="请描述你想要生成的图像，例如：一只可爱的小猫坐在花园里，阳光明媚，细节丰富"
+                            rows="4"
+                        ></textarea>
                     </div>
-                </button>
-            </div>
-            
-            <div class="preview-section">
-                <h2>生成结果</h2>
-                <div class="preview-grid" id="previewGrid">
-                    <div class="preview-item">
-                        <h3>生成的图像</h3>
-                        <div class="preview-image" id="generatedImage">
-                            <div class="placeholder">
-                                <div class="placeholder-icon">🖼️</div>
-                                <span>点击"生成图像"开始创作</span>
+
+                    <div class="form-group">
+                        <label for="imageFile">参考图片上传（可选）</label>
+                        <input
+                            type="file"
+                            id="imageFile"
+                            class="form-control"
+                            accept="image/*"
+                        />
+                        <input type="hidden" id="imageUrl" />
+                        <small
+                            class="form-text"
+                            style="
+                                color: #6c757d;
+                                font-size: 0.9rem;
+                                margin-top: 5px;
+                            "
+                        >
+                            选择本地图片后将自动上传至对象存储并作为参考图使用
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="novelFile">小说文本文件（可选）</label>
+                        <input
+                            type="file"
+                            id="novelFile"
+                            class="form-control"
+                            accept=".txt,.text"
+                        />
+                        <small
+                            class="form-text"
+                            style="
+                                color: #6c757d;
+                                font-size: 0.9rem;
+                                margin-top: 5px;
+                            "
+                        >
+                            支持上传txt格式的小说文件，AI将从中提取相关描述生成图像
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="size">图片尺寸</label>
+                        <select id="size" class="form-control">
+                            <option value="1K">1K (1024x1024)</option>
+                            <option value="2K" selected>2K (2048x2048)</option>
+                            <option value="4K">4K (4096x4096)</option>
+                        </select>
+                    </div>
+
+                    <button id="generateBtn" class="btn">
+                        <span class="btn-text">生成图像</span>
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <span>生成中...</span>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="preview-section">
+                    <h2>生成结果</h2>
+                    <div class="preview-grid" id="previewGrid">
+                        <div class="preview-item">
+                            <h3>生成的图像</h3>
+                            <div class="preview-image" id="generatedImage">
+                                <div class="placeholder">
+                                    <div class="placeholder-icon">🖼️</div>
+                                    <span>点击"生成图像"开始创作</span>
+                                </div>
+                            </div>
+                            <div
+                                class="image-actions"
+                                id="imageActions"
+                                style="margin-top: 15px; display: none"
+                            >
+                                <button
+                                    id="downloadBtn"
+                                    class="btn"
+                                    style="
+                                        margin-right: 10px;
+                                        padding: 8px 16px;
+                                        font-size: 0.9rem;
+                                    "
+                                >
+                                    📥 下载图片
+                                </button>
+                                <button
+                                    id="copyUrlBtn"
+                                    class="btn"
+                                    style="padding: 8px 16px; font-size: 0.9rem"
+                                >
+                                    📋 复制链接
+                                </button>
                             </div>
                         </div>
-                        <div class="image-actions" id="imageActions" style="margin-top: 15px; display: none;">
-                            <button id="downloadBtn" class="btn" style="margin-right: 10px; padding: 8px 16px; font-size: 0.9rem;">
-                                📥 下载图片
-                            </button>
-                            <button id="copyUrlBtn" class="btn" style="padding: 8px 16px; font-size: 0.9rem;">
-                                📋 复制链接
-                            </button>
-                        </div>
                     </div>
+
+                    <div class="error-message" id="errorMessage"></div>
+                    <div class="success-message" id="successMessage"></div>
                 </div>
-                
-                <div class="error-message" id="errorMessage"></div>
-                <div class="success-message" id="successMessage"></div>
             </div>
         </div>
-    </div>
 
-    <script type="module" src="/src/textToImage.ts"></script>
-</body>
+        <script type="module" src="/src/textToImage.ts"></script>
+    </body>
 </html>
