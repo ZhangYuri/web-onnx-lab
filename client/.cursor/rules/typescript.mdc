@@ -1,0 +1,36 @@
+---
+globs: client/src/**/*.ts
+alwaysApply: false
+---
+# TypeScript 规范
+
+## 文件与命名
+- 所有新代码文件必须使用 `.ts`
+- 文件名/函数名小驼峰
+
+## 类型声明
+- 禁止随意使用 `any`，如确需使用需注明原因
+- 优先使用明确的类型声明，避免使用宽泛类型（如 `object`、`Function`）
+- 推荐使用类型推断，但对于函数参数、返回值必须显式声明类型
+
+## 接口与类型
+- 推荐优先使用 `interface` 定义对象结构，类型别名 `type` 用于联合类型、工具类型等
+- 类型和接口命名采用大驼峰（PascalCase）
+- 公共类型定义集中存放于 `contract.ts` 目录
+
+## 严格模式
+- `tsconfig.json` 必须开启 `strict` 相关选项
+- 禁止使用 `@ts-ignore`，如确需使用需注明原因
+
+## import/export 规范
+- 使用 ES Module 语法
+- 按功能分组 import，先第三方库，后本地模块
+- 禁止循环依赖
+
+## 工具类型
+- 善用 TypeScript 内置工具类型（如 Partial、Pick、Omit、Record 等）
+- 推荐自定义工具类型时加注释说明
+
+## 其他
+- 类型定义应尽量详细，避免类型过于宽泛
+- 充分利用 IDE/类型检查工具，及时修复类型错误

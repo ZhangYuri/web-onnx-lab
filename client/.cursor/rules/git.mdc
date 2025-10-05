@@ -1,0 +1,39 @@
+---
+description: git commit
+alwaysApply: false
+---
+# Git 规范
+
+## 分支管理
+- 分支命名采用 `dev`、`next`、`patch` 等格式
+- 当前迭代在 `dev` 提交
+- 下个迭代在 `next` 提交
+- 跨多个迭代的重大需求单独新拉分支
+
+## 提交信息规范
+- 提交信息遵循 Conventional Commits 规范，如：
+  - feat: 新增功能
+  - fix: 修复 bug
+  - docs: 文档变更
+  - style: 代码格式（不影响逻辑）
+  - refactor: 重构
+  - test: 增加/修改测试
+  - chore: 构建/工具/依赖变更
+- 提交信息应简明扼要，必要时补充详细描述
+
+## 合并与 PR
+- 合并前需确保本地通过所有 lint、测试
+- 推荐通过 Pull Request 合并，需至少一人 review
+- 合并时优先使用 squash merge，保持提交历史清晰
+
+## 冲突处理
+- 解决冲突后需重新自测，确保功能正常
+- 合并前再次同步主分支，减少冲突
+
+## Tag 与版本
+- 发布版本需打 tag，格式如 `tag_20250829`，规则为：前缀+时间，重要的需求、bug单号写在 message 中
+- 重要变更需在 CHANGELOG.md 记录
+
+## .gitignore
+- 忽略 node_modules、dist、build、.env、log、临时文件等
+- 保持 .gitignore 文件及时更新
