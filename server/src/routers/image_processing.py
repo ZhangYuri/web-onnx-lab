@@ -8,17 +8,18 @@ try:
     from ..config.settings import get_settings  # 作为包运行时
 except ImportError:
     from config.settings import get_settings   # 作为脚本运行时
-from PIL import Image
-import os
 
-router = APIRouter(
-    prefix="/image",
-    tags=["image-processing"]
-)
+# router = APIRouter(
+#     prefix="/image",
+#     tags=["image-processing"]
+# )
 
 # ============== 代理路由 ==============
 proxy_router = APIRouter(prefix="/proxy", tags=["proxy"])
 
+# @proxy_router.options("/doubao/generate")
+# async def proxy_doubao_generate_options():
+#     return {"status": "ok"}
 
 @proxy_router.post("/doubao/generate")
 async def proxy_doubao_generate(payload: dict, settings=Depends(get_settings)):
@@ -41,12 +42,21 @@ async def proxy_doubao_generate(payload: dict, settings=Depends(get_settings)):
         "Content-Type": "application/json",
         "Authorization": f"Bearer {settings.DOUBAO_API_KEY}",
     }
+
+    print(request_body)
+    print(headers)
+    print(settings.DOUBAO_BASE_URL)
+
     async with httpx.AsyncClient(timeout=60) as client:
         r = await client.post(settings.DOUBAO_BASE_URL, headers=headers, json=request_body)
         if r.status_code >= 400:
             raise HTTPException(status_code=r.status_code, detail=r.text)
         return r.json()
 
+# @proxy_router.options("/deepseek/summarize")
+# async def proxy_deepseek_summarize_options():
+#     print("proxy_deepseek_summarize_options")
+#     return {"status": "ok"}
 
 @proxy_router.post("/deepseek/summarize")
 async def proxy_deepseek_summarize(payload: dict, settings=Depends(get_settings)):
@@ -78,12 +88,15 @@ async def proxy_deepseek_summarize(payload: dict, settings=Depends(get_settings)
         "Content-Type": "application/json",
         "Authorization": f"Bearer {settings.DEEPSEEK_API_KEY}",
     }
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=120) as client:
         r = await client.post(settings.DEEPSEEK_BASE_URL, headers=headers, json=body)
         if r.status_code >= 400:
             raise HTTPException(status_code=r.status_code, detail=r.text)
         return r.json()
 
+# @proxy_router.options("/tos/upload-from-file")
+# async def proxy_tos_upload_from_file_options():
+#     return {"status": "ok"}
 
 @proxy_router.post("/tos/upload-from-file")
 async def proxy_tos_upload_from_file(payload: dict, settings=Depends(get_settings)):
@@ -138,6 +151,10 @@ async def proxy_tos_upload_from_file(payload: dict, settings=Depends(get_setting
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"未知错误: {e}")
 
+
+# @proxy_router.options("/tos/upload")
+# async def proxy_tos_upload_options():
+#     return {"status": "ok"}
 
 @proxy_router.post("/tos/upload")
 async def proxy_tos_upload(file: UploadFile = File(...), objectKey: str | None = None, settings=Depends(get_settings)):

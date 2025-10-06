@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-import os
 
 class Settings(BaseSettings):
     # API配置
@@ -9,7 +8,7 @@ class Settings(BaseSettings):
     
     # 服务器配置
     HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    PORT: int = 80
     RELOAD: bool = True  # 开发模式下的热重载
 
     # 图像处理配置
@@ -26,12 +25,12 @@ class Settings(BaseSettings):
     DEEPSEEK_MODEL: str = "deepseek-chat"
 
     # TOS（对象存储）配置
-    TOS_ACCESS_KEY: str = os.getenv('TOS_ACCESS_KEY')
-    TOS_SECRET_KEY: str = os.getenv('TOS_SECRET_KEY')
+    TOS_ACCESS_KEY: str = ""
+    TOS_SECRET_KEY: str = ""
     TOS_ENDPOINT: str = "tos-cn-beijing.volces.com"
     TOS_REGION: str = "cn-beijing"
-    TOS_BUCKET_NAME: str = "yuri-bucket"
-    
+    TOS_BUCKET_NAME: str = ""
+
     class Config:
         case_sensitive = True
         env_file = ".env"

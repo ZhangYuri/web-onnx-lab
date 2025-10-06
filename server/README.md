@@ -55,22 +55,21 @@ uv pip install -r requirements.txt
 
 在项目根目录下运行：
 ```bash
-cd src
-uv run main.py
+uv run uvicorn src.main:app --host 0.0.0.0 --port 80 --reload
 ```
 
-服务将在 http://localhost:8000 启动。
+服务将在 http://localhost 启动。
 
 ## API文档
 
 启动服务后，可以访问以下地址查看API文档：
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: http://localhost/docs
+- ReDoc: http://localhost/redoc
 
 ## API端点
 
 - `GET /`: 欢迎页面
 - `GET /health`: 健康检查
-- `POST /api/v1/image/doubao/generate`: seedream4.0 图像处理
-- `POST /api/v1/image/deepseek/summarize`: deepseek 接口
-- `POST /api/v1/image/tos/upload-from-file`: 图片云存储
+- `POST /api/v1/proxy/doubao/generate`: seedream4.0 图像处理
+- `POST /api/v1/proxy/deepseek/summarize`: deepseek 接口
+- `POST /api/v1/proxy/tos/upload-from-file`: 图片云存储

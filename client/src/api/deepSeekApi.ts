@@ -4,7 +4,7 @@
  */
 
 export interface DeepSeekMessage {
-    role: 'system' | 'user' | 'assistant';
+    role: "system" | "user" | "assistant";
     content: string;
 }
 
@@ -51,7 +51,117 @@ export class DeepSeekApiService {
         this.proxyBaseUrl = import.meta.env.VITE_DEEPSEEK_BASE_URL
             ? `${import.meta.env.VITE_DEEPSEEK_BASE_URL}/api/v1/proxy/deepseek/summarize`
             : `/api/v1/proxy/deepseek/summarize`;
-        this.defaultModel = import.meta.env.VITE_DEEPSEEK_MODEL || 'deepseek-chat';
+        this.defaultModel =
+            import.meta.env.VITE_DEEPSEEK_MODEL || "deepseek-chat";
+    }
+
+    /**
+     * 预处理：提取与用户主题相关的小说内容（支持超过 token 上限的分批提取）
+     * 入参与 summarizeNovelForImage 相同，但仅做“相关内容提取”，将多次提取的结果拼接返回
+     * @param novelText 小说全文
+     * @param userPrompt 用户给定主题/图像需求
+     */
+    async extractRelevantContentForImage(
+        novelText: string,
+        userPrompt: string
+    ): Promise<string> {
+        if (!novelText.trim()) {
+            throw new Error("请上传小说文本文件");
+        }
+        if (!userPrompt.trim()) {
+            throw new Error("请输入您想要生成的图像描述");
+        }
+
+        // 估算 token：中文场景下可近似按字符数估算，设置安全阈值为 120,000
+        const MAX_TOKENS_SAFE = 120000;
+        const CHUNK_OVERLAP = 500; // 适度重叠，减少跨段丢失
+
+        const systemPrompt = `你是一个严谨的文学研究助理。请仅从用户提供的小说文本中，提取与用户指定主题直接相关的原文片段（尽量保持原句/原段，不进行改写）。
+        \n\n要求：
+        \n- 只保留与主题强相关的内容，删除无关段落
+        \n- 优先保留包含：
+        \n  -空间布局：位置、大小、形状、与其它元素的关系
+        \n  -视觉细节：颜色、材质、纹理、特殊的符号或雕刻
+        \n  -核心实体：关键物体的样貌。
+        \n  -独特氛围：任何描述光线（如磷光、冷光）、气味（如腐臭、药味）、触感（如湿滑、粘稠）、材质的词语。
+        \n- 保持原文顺序，不要添加解释或总结
+        \n- 如果文本过长，本工具会分批发送多段文本，你只需对收到的该段进行精确提取
+        \n- 输出仅为提取后的原文片段文本`;
+
+        // 切分为不超过 MAX_TOKENS_SAFE 的片段（近似用字符数界定）
+        const chunks: string[] = [];
+        if (novelText.length <= MAX_TOKENS_SAFE) {
+            chunks.push(novelText);
+        } else {
+            let start = 0;
+            while (start < novelText.length) {
+                const end = Math.min(
+                    start + MAX_TOKENS_SAFE,
+                    novelText.length
+                );
+                const piece = novelText.slice(start, end);
+                chunks.push(piece);
+                if (end >= novelText.length) break;
+                start = end - CHUNK_OVERLAP; // 带重叠前移
+                if (start < 0) start = 0;
+            }
+        }
+
+        const extractedParts: string[] = [];
+        for (let i = 0; i < chunks.length; i++) {
+            const part = chunks[i];
+            const partHeader = chunks.length > 1 ? `（第${i + 1}/${chunks.length}段）` : "";
+            try {
+                const response = await fetch(this.proxyBaseUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        model: this.defaultModel,
+                        systemPrompt,
+                        novelText: part,
+                        userPrompt: `主题：${userPrompt}${partHeader}`,
+                        stream: false,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData: DeepSeekError = await response.json();
+                    throw new Error(
+                        `DeepSeek API错误: ${
+                            (errorData as any)?.error?.message || response.statusText
+                        }`
+                    );
+                }
+
+                const data: DeepSeekResponse = await response.json();
+                if (data.choices && data.choices.length > 0) {
+                    const content = data.choices[0].message.content?.trim();
+                    if (content) extractedParts.push(content);
+                } else {
+                    throw new Error("DeepSeek API返回数据格式异常");
+                }
+            } catch (error) {
+                if (error instanceof Error) {
+                    // 单段失败不中断整体流程，但记录占位
+                    extractedParts.push("");
+                    console.error("相关内容提取失败：", error.message);
+                    continue;
+                }
+                extractedParts.push("");
+                continue;
+            }
+        }
+
+        // 拼接所有片段提取结果
+        const merged = extractedParts
+            .filter((t) => !!t && t.trim().length > 0)
+            .join("\n\n");
+        if (!merged) {
+            throw new Error("未从小说中提取到与主题相关的内容，请调整描述后重试");
+        }
+        return merged;
     }
 
     /**
@@ -61,15 +171,15 @@ export class DeepSeekApiService {
      * @returns Promise<string> 生成的图像描述
      */
     async summarizeNovelForImage(
-        novelText: string, 
+        novelText: string,
         userPrompt: string
     ): Promise<string> {
         if (!novelText.trim()) {
-            throw new Error('请上传小说文本文件');
+            throw new Error("请上传小说文本文件");
         }
 
         if (!userPrompt.trim()) {
-            throw new Error('请输入您想要生成的图像描述');
+            throw new Error("请输入您想要生成的图像描述");
         }
 
         const systemPrompt = `你是一个专业的文学分析师和图像描述专家。你的任务是从用户提供的小说文本中，提取与用户指定的图像主题相关的内容，并生成一个详细的图像描述prompt。
@@ -92,36 +202,40 @@ export class DeepSeekApiService {
 
         try {
             const response = await fetch(this.proxyBaseUrl, {
-                method: 'POST',
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json'
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
                     model: this.defaultModel,
                     systemPrompt,
                     novelText,
                     userPrompt,
-                    stream: false
-                })
+                    stream: false,
+                }),
             });
 
             if (!response.ok) {
                 const errorData: DeepSeekError = await response.json();
-                throw new Error(`DeepSeek API错误: ${errorData.error?.message || response.statusText}`);
+                throw new Error(
+                    `DeepSeek API错误: ${
+                        errorData.error?.message || response.statusText
+                    }`
+                );
             }
 
             const data: DeepSeekResponse = await response.json();
-            
+
             if (data.choices && data.choices.length > 0) {
                 return data.choices[0].message.content;
             } else {
-                throw new Error('DeepSeek API返回数据格式异常');
+                throw new Error("DeepSeek API返回数据格式异常");
             }
         } catch (error) {
             if (error instanceof Error) {
                 throw error;
             }
-            throw new Error('网络请求失败，请检查网络连接');
+            throw new Error("网络请求失败，请检查网络连接");
         }
     }
 
@@ -132,16 +246,22 @@ export class DeepSeekApiService {
      */
     validateTextContent(text: string): { isValid: boolean; message?: string } {
         if (!text || !text.trim()) {
-            return { isValid: false, message: '文本内容不能为空' };
+            return { isValid: false, message: "文本内容不能为空" };
         }
 
         if (text.length < 100) {
-            return { isValid: false, message: '文本内容太短，至少需要100个字符' };
+            return {
+                isValid: false,
+                message: `文本内容太短，至少需要100个字符，当前文本长度为${text.length}个字符`,
+            };
         }
 
-        if (text.length > 100000) {
-            return { isValid: false, message: '文本内容太长，最多支持100,000个字符' };
-        }
+        // if (text.length > 100000) {
+        //     return {
+        //         isValid: false,
+        //         message: `文本内容太长，最多支持100,000个字符，当前文本长度为${text.length}个字符`,
+        //     };
+        // }
 
         return { isValid: true };
     }
@@ -150,7 +270,7 @@ export class DeepSeekApiService {
      * 获取支持的文件类型
      */
     getSupportedFileTypes(): string[] {
-        return ['.txt', '.text'];
+        return [".txt", ".text"];
     }
 
     /**
