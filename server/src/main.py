@@ -20,15 +20,16 @@ app.add_middleware(
     CORSMiddleware,
     # 指定允许的来源，避免凭证模式下与 "*" 冲突
     allow_origins=[
-        "https://yuri.localhost.com"
+        "https://yuri.localhost.com",
+        "https://yuri.iqiyi.com"
     ],
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_credentials=True,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # 注册路由
-app.include_router(image_processing.router, prefix="/api/v1")
+# app.include_router(image_processing.router, prefix="/api/v1")
 app.include_router(proxy_router, prefix="/api/v1")
 
 @app.get("/")
