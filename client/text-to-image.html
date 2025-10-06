@@ -252,40 +252,11 @@
             <div class="main-content">
                 <div class="error-message" id="errorMessage"></div>
                 <div class="success-message" id="successMessage"></div>
-                <div class="input-section">
-                    <div class="form-group">
-                        <label for="prompt">文字描述</label>
-                        <textarea
-                            id="prompt"
-                            class="form-control textarea"
-                            placeholder="请描述你想要生成的图像，例如：一只可爱的小猫坐在花园里，阳光明媚，细节丰富"
-                            rows="4"
-                        ></textarea>
-                    </div>
 
+                <div class="input-section" id="novelPromptSection">
+                    <h2 style="margin-bottom: 16px;">Step Ⅰ：根据小说生成Prompt</h2>
                     <div class="form-group">
-                        <label for="imageFile">图片上传（可选）</label>
-                        <input
-                            type="file"
-                            id="imageFile"
-                            class="form-control"
-                            accept="image/*"
-                        />
-                        <input type="hidden" id="imageUrl" />
-                        <small
-                            class="form-text"
-                            style="
-                                color: #6c757d;
-                                font-size: 0.9rem;
-                                margin-top: 5px;
-                            "
-                        >
-                            选择本地图片后将自动上传至对象存储并作为待处理图片使用
-                        </small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="novelFile">小说文本文件（可选）</label>
+                        <label for="novelFile">小说文本文件</label>
                         <input
                             type="file"
                             id="novelFile"
@@ -300,7 +271,65 @@
                                 margin-top: 5px;
                             "
                         >
-                            支持上传txt格式的小说文件，AI将从中提取相关描述生成图像
+                            上传 txt 文本，系统将结合你的主题生成可复用的 Prompt。
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label for="novelTheme">主题/图像需求</label>
+                        <textarea
+                            id="novelTheme"
+                            class="form-control textarea"
+                            placeholder="请输入主题，如：幽暗墓道里的青铜人面像，冷色氛围，强调材质与光影"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="novelPrompt">生成的 Prompt</label>
+                        <textarea
+                            id="novelPrompt"
+                            class="form-control textarea"
+                            placeholder="生成的 Prompt 会显示在这里，也可手动编辑后用于文生图"
+                            rows="5"
+                        ></textarea>
+                        <div style="margin-top: 10px;">
+                            <button id="generatePromptBtn" class="btn" style="margin-right: 10px;">
+                                ✨ 生成 Prompt
+                            </button>
+                            <button id="copyPromptBtn" class="btn">
+                                📋 复制 Prompt
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-section" id="txt2imgSection">
+                    <h2 style="margin-bottom: 16px;">Step Ⅱ：生成图片</h2>
+                    <div class="form-group">
+                        <label for="prompt">用于生成图片的 Prompt</label>
+                        <textarea
+                            id="prompt"
+                            class="form-control textarea"
+                            placeholder="用于生成图像的 Prompt，可手动编辑或来自上方生成"
+                            rows="4"
+                        ></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageUrl">参考图片URL（可选，支持多行）</label>
+                        <textarea
+                            id="imageUrl"
+                            class="form-control textarea"
+                            placeholder="每行一个图片URL，可留空"
+                            rows="3"
+                        ></textarea>
+                        <small
+                            class="form-text"
+                            style="
+                                color: #6c757d;
+                                font-size: 0.9rem;
+                                margin-top: 5px;
+                            "
+                        >
+                            可填写一个或多个参考图片地址，使用换行分隔
                         </small>
                     </div>
 
@@ -364,6 +393,7 @@
             </div>
         </div>
 
+        <script type="module" src="/src/novelToPrompt.ts"></script>
         <script type="module" src="/src/textToImage.ts"></script>
     </body>
 </html>

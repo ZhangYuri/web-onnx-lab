@@ -126,10 +126,15 @@ export class UIComponents {
         }
 
         if (imageUrl && imageUrl.trim()) {
-            try {
-                new URL(imageUrl);
-            } catch {
-                return { isValid: false, message: '请输入有效的图片URL' };
+            const lines = imageUrl.split(/\r?\n/)
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+            for (const line of lines) {
+                try {
+                    new URL(line);
+                } catch {
+                    return { isValid: false, message: '请输入有效的图片URL（每行一个）' };
+                }
             }
         }
 

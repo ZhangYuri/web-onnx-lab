@@ -6,7 +6,7 @@
 export interface TextToImageRequest {
     model: string;
     prompt: string;
-    image?: string;
+    image?: string | string[];
     size: string;
 }
 
@@ -52,7 +52,7 @@ export class TextToImageApiService {
      */
     async generateImage(
         prompt: string,
-        imageUrl?: string,
+        imageUrl?: string | string[],
         size: string = '2K'
     ): Promise<TextToImageResponse> {
         if (!prompt.trim()) {
@@ -65,9 +65,11 @@ export class TextToImageApiService {
             size: size
         };
 
-        // 如果有参考图片，添加到请求中
-        if (imageUrl && imageUrl.trim()) {
+        // 如果有参考图片，添加到请求中（支持单个或多个URL）
+        if (typeof imageUrl === 'string' && imageUrl.trim()) {
             requestData.image = imageUrl.trim();
+        } else if (Array.isArray(imageUrl) && imageUrl.length > 0) {
+            requestData.image = imageUrl.map(u => u.trim()).filter(u => u.length > 0);
         }
 
         try {

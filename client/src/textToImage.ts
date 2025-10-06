@@ -1,15 +1,13 @@
 /**
- * 文生图页面主逻辑（支持小说生图）
+ * 文生图页面主逻辑
  */
 
 import { textToImageApi, TextToImageResponse } from "./api/textToImageApi.js";
-import { deepSeekApi } from "./api/deepSeekApi.js";
 import { UIComponents } from "./components/ui.js";
 
 class TextToImageApp {
     private promptInput!: HTMLTextAreaElement;
-    private imageUrlInput!: HTMLInputElement;
-    private novelFileInput!: HTMLInputElement;
+    private imageUrlInput!: HTMLTextAreaElement;
     private sizeSelect!: HTMLSelectElement;
     private generateBtn!: HTMLButtonElement;
     private previewGrid!: HTMLElement;
@@ -18,8 +16,6 @@ class TextToImageApp {
     private copyUrlBtn!: HTMLButtonElement;
     private imageActions!: HTMLElement;
     private currentImageUrl: string = "";
-    private uploadedNovelText: string = "";
-    private imageFileInput!: HTMLInputElement;
 
     constructor() {
         this.initializeElements();
@@ -36,10 +32,7 @@ class TextToImageApp {
         ) as HTMLTextAreaElement;
         this.imageUrlInput = document.getElementById(
             "imageUrl"
-        ) as HTMLInputElement;
-        this.novelFileInput = document.getElementById(
-            "novelFile"
-        ) as HTMLInputElement;
+        ) as HTMLTextAreaElement;
         this.sizeSelect = document.getElementById("size") as HTMLSelectElement;
         this.generateBtn = document.getElementById(
             "generateBtn"
@@ -59,9 +52,6 @@ class TextToImageApp {
         this.imageActions = document.getElementById(
             "imageActions"
         ) as HTMLElement;
-        this.imageFileInput = document.getElementById(
-            "imageFile"
-        ) as HTMLInputElement;
     }
 
     /**
@@ -81,55 +71,7 @@ class TextToImageApp {
             "input",
             UIComponents.debounce(() => this.validateInput(), 500)
         );
-
-        // 本地参考图选择后自动上传
-        if (this.imageFileInput) {
-            this.imageFileInput.addEventListener("change", async () => {
-                const file = this.imageFileInput.files?.[0];
-                if (!file) return;
-                try {
-                    UIComponents.showSuccess(
-                        "正在上传参考图片...",
-                        this.mainContent
-                    );
-                    const form = new FormData();
-                    form.append("file", file);
-
-                    const base =
-                        (import.meta as any).env.VITE_SERVER_BASE_URL || "";
-                    const url = `${base}/api/v1/proxy/tos/upload`;
-                    const resp = await fetch(url, {
-                        method: "POST",
-                        body: form,
-                    });
-                    if (!resp.ok) {
-                        const t = await resp.text();
-                        throw new Error(`上传失败: ${t}`);
-                    }
-                    const data = await resp.json();
-                    const uploadedUrl = data.url || "";
-                    if (!uploadedUrl) throw new Error("上传成功但未返回URL");
-                    this.imageUrlInput.value = uploadedUrl;
-                    UIComponents.showSuccess(
-                        "参考图片上传成功，已自动填充",
-                        this.mainContent
-                    );
-                } catch (err) {
-                    console.error(err);
-                    UIComponents.showError(
-                        err instanceof Error ? err.message : "上传失败",
-                        this.mainContent
-                    );
-                    this.imageUrlInput.value = "";
-                    if (this.imageFileInput) this.imageFileInput.value = "";
-                }
-            });
-        }
-
-        // 小说文件上传事件
-        this.novelFileInput.addEventListener("change", (event) => {
-            this.handleNovelFileUpload(event);
-        });
+        
 
         // 回车键生成
         this.promptInput.addEventListener("keydown", (e) => {
@@ -172,88 +114,13 @@ class TextToImageApp {
         // 设置默认值
         this.promptInput.value = "";
         this.imageUrlInput.value = "";
-        this.novelFileInput.value = "";
         this.sizeSelect.value = "2K";
 
         // 重置预览
         UIComponents.resetImagePreview(this.previewGrid);
         this.hideImageActions();
 
-        console.log("文生图应用已初始化（支持小说生图）");
-    }
-
-    /**
-     * 处理小说文件上传
-     */
-    private async handleNovelFileUpload(event: Event): Promise<void> {
-        const target = event.target as HTMLInputElement;
-        const file = target.files?.[0];
-
-        if (!file) return;
-
-        // 验证文件类型
-        const supportedTypes = deepSeekApi.getSupportedFileTypes();
-        const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
-
-        if (!supportedTypes.includes(fileExtension)) {
-            UIComponents.showError("请上传txt格式的文件", this.mainContent);
-            target.value = "";
-            return;
-        }
-
-        // 验证文件大小
-        const maxSize = deepSeekApi.getMaxFileSize();
-        if (file.size > maxSize) {
-            UIComponents.showError(
-                `文件大小不能超过${UIComponents.formatFileSize(maxSize)}`,
-                this.mainContent
-            );
-            target.value = "";
-            return;
-        }
-
-        try {
-            // 读取文件内容
-            const text = await this.readFileAsText(file);
-
-            // 验证文本内容
-            const validation = deepSeekApi.validateTextContent(text);
-            if (!validation.isValid) {
-                UIComponents.showError(validation.message!, this.mainContent);
-                target.value = "";
-                return;
-            }
-
-            this.uploadedNovelText = text;
-            UIComponents.showSuccess(
-                `小说文件上传成功！文本长度：${text.length}字符`,
-                this.mainContent
-            );
-
-            // 更新提示文本
-            this.promptInput.placeholder =
-                "请输入您想要生成的图像描述，AI将从小说中提取相关描述...";
-        } catch (error) {
-            console.error("读取文件失败:", error);
-            UIComponents.showError("读取文件失败，请重试", this.mainContent);
-            target.value = "";
-        }
-    }
-
-    /**
-     * 读取文件为文本
-     */
-    private readFileAsText(file: File): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                resolve(e.target?.result as string);
-            };
-            reader.onerror = () => {
-                reject(new Error("文件读取失败"));
-            };
-            reader.readAsText(file, "UTF-8");
-        });
+        console.log("文生图应用已初始化");
     }
 
     /**
@@ -276,38 +143,11 @@ class TextToImageApp {
             UIComponents.setLoadingState(this.generateBtn, true);
             UIComponents.hideMessages(this.mainContent);
 
-            let finalPrompt = this.promptInput.value;
-
-            // 如果上传了小说文件，先进行“主题相关内容提取”预处理，再总结生成图像描述
-            if (this.uploadedNovelText) {
-                // console.log("开始提取与主题相关的小说内容...");
-                // UIComponents.showSuccess(
-                //     "正在提取与主题相关的小说内容，请稍候...",
-                //     this.mainContent
-                // );
-
-                // const extracted = await deepSeekApi.extractRelevantContentForImage(
-                //     this.uploadedNovelText,
-                //     this.promptInput.value
-                // );
-
-                // console.log("已提取相关内容，长度:", extracted);
-                // UIComponents.showSuccess(
-                //     "相关内容提取完成，正在生成图像描述...",
-                //     this.mainContent
-                // );
-
-                finalPrompt = await deepSeekApi.summarizeNovelForImage(
-                    this.uploadedNovelText,
-                    this.promptInput.value
-                );
-
-                console.log("DeepSeek生成的prompt:", finalPrompt);
-                UIComponents.showSuccess(
-                    "小说内容分析完成，开始生成图像...",
-                    this.mainContent
-                );
-            }
+            const finalPrompt = this.promptInput.value;
+            const imageUrlLines = this.imageUrlInput.value
+                .split(/\r?\n/)
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
 
             // return;
 
@@ -315,7 +155,7 @@ class TextToImageApp {
             const response: TextToImageResponse =
                 await textToImageApi.generateImage(
                     finalPrompt,
-                    this.imageUrlInput.value || undefined,
+                    (imageUrlLines.length > 0 ? imageUrlLines : undefined) as any,
                     this.sizeSelect.value
                 );
 
