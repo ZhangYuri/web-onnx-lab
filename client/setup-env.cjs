@@ -49,19 +49,19 @@ function createEnvFile() {
 
         console.log('✅ .env文件创建成功！');
         console.log('');
-        console.log('📝 请编辑 .env 文件，填入真实的API密钥：');
-        console.log('   - VITE_DOUBAO_API_KEY: 豆包API密钥');
-        console.log('   - VITE_DEEPSEEK_API_KEY: DeepSeek API密钥');
+        console.log('📝 请编辑 .env 文件，填入真实的 API 信息：');
+        console.log('   - VITE_DOUBAO_BASE_URL: 豆包API地址');
+        console.log('   - VITE_DEEPSEEK_BASE_URL: DeepSeek API地址');
+        console.log('   - VITE_SERVER_BASE_URL: 后端API地址');
+        console.log('   - VITE_DOUBAO_MODEL: 豆包API模型');
+        console.log('   - VITE_DEEPSEEK_MODEL: DeepSeek API模型');
         console.log('');
         console.log('🚨 重要提醒：');
         console.log('   1. 请立即更换已泄露的API密钥');
         console.log('   2. 不要将 .env 文件提交到Git');
         console.log('   3. 配置完成后重启开发服务器');
-
     } catch (error) {
         console.error('❌ 创建.env文件失败:', error.message);
         process.exit(1);
     }
 }
-
-
