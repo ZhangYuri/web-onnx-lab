@@ -16,6 +16,7 @@ class TextToImageApp {
     private copyUrlBtn!: HTMLButtonElement;
     private imageActions!: HTMLElement;
     private currentImageUrl: string = "";
+    private imageUrlPreview!: HTMLElement;
 
     constructor() {
         this.initializeElements();
@@ -52,6 +53,9 @@ class TextToImageApp {
         this.imageActions = document.getElementById(
             "imageActions"
         ) as HTMLElement;
+        this.imageUrlPreview = document.getElementById(
+            "imageUrlPreview"
+        ) as HTMLElement;
     }
 
     /**
@@ -69,7 +73,14 @@ class TextToImageApp {
 
         this.imageUrlInput.addEventListener(
             "input",
-            UIComponents.debounce(() => this.validateInput(), 500)
+            UIComponents.debounce(() => {
+                this.validateInput();
+                const urls = this.imageUrlInput.value
+                    .split(/\r?\n/)
+                    .map((s) => s.trim())
+                    .filter((s) => s.length > 0);
+                this.updateImageUrlPreview(urls);
+            }, 400)
         );
         
 
@@ -119,6 +130,9 @@ class TextToImageApp {
         // 重置预览
         UIComponents.resetImagePreview(this.previewGrid);
         this.hideImageActions();
+
+        // 重置参考图小图预览
+        this.updateImageUrlPreview([]);
 
         console.log("文生图应用已初始化");
     }
@@ -270,6 +284,31 @@ class TextToImageApp {
             this.imageActions.style.display = "none";
         }
         this.currentImageUrl = "";
+    }
+
+    /**
+     * 根据多行URL更新参考图小图预览
+     */
+    private updateImageUrlPreview(urls: string[]): void {
+        if (!this.imageUrlPreview) return;
+        if (!urls || urls.length === 0) {
+            this.imageUrlPreview.style.display = "none";
+            this.imageUrlPreview.innerHTML = "";
+            return;
+        }
+
+        this.imageUrlPreview.style.display = "block";
+        const itemsHtml = urls
+            .slice(0, 12)
+            .map((u) => {
+                const safe = u.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                return `
+                <div style="display:inline-block;width:72px;height:72px;border:1px solid #dee2e6;border-radius:6px;margin-right:8px;margin-bottom:8px;overflow:hidden;background:#f8f9fa;vertical-align:top;">
+                    <img src="${safe}" alt="ref" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'" />
+                </div>`;
+            })
+            .join("");
+        this.imageUrlPreview.innerHTML = itemsHtml;
     }
 }
 
