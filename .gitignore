@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 .cert
 **/__pycache__
-*.txt
+
 
 # 环境变量文件
 .env

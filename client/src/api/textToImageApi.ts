@@ -67,7 +67,7 @@ export class TextToImageApiService {
 
         // 如果有参考图片，添加到请求中（支持单个或多个URL）
         if (typeof imageUrl === 'string' && imageUrl.trim()) {
-            requestData.image = imageUrl.trim();
+            requestData.image = [imageUrl.trim()];
         } else if (Array.isArray(imageUrl) && imageUrl.length > 0) {
             requestData.image = imageUrl.map(u => u.trim()).filter(u => u.length > 0);
         }
