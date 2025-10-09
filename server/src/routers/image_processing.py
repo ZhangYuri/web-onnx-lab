@@ -27,6 +27,13 @@ async def proxy_doubao_generate(payload: dict, settings=Depends(get_settings)):
         "model": payload.get("model") or settings.DOUBAO_MODEL,
         "prompt": payload.get("prompt"),
         "size": payload.get("size") or "2K",
+        "sequential_image_generation": "auto",
+        "sequential_image_generation_options": {
+            "max_images": payload.get("max_images") or 1
+        },
+        "response_format": "url",
+        "stream": False,
+        "watermark": False,
     }
     if payload.get("image"):
         request_body["image"] = payload["image"]
@@ -40,10 +47,8 @@ async def proxy_doubao_generate(payload: dict, settings=Depends(get_settings)):
     }
 
     print(request_body)
-    print(headers)
-    print(settings.DOUBAO_BASE_URL)
 
-    async with httpx.AsyncClient(timeout=60) as client:
+    async with httpx.AsyncClient(timeout=300) as client:
         r = await client.post(settings.DOUBAO_BASE_URL, headers=headers, json=request_body)
         if r.status_code >= 400:
             raise HTTPException(status_code=r.status_code, detail=r.text)
