@@ -3,10 +3,74 @@
     <head>
         <meta charset="UTF-8" />
         <title>Cartoonize Demo - WebNN/WebGPU/WASM</title>
+        <style>
+            * { box-sizing: border-box; }
+            :root {
+                --bg: #0b0f17;
+                --panel: #0f172a;
+                --border: rgba(148,163,184,0.14);
+                --text: #e5e7eb;
+                --muted: #94a3b8;
+                --accent: #7c3aed;
+                --radius: 14px;
+                --shadow: 0 12px 40px rgba(0,0,0,0.55);
+            }
+            body {
+                margin: 0;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                color: var(--text);
+                background:
+                  radial-gradient(1000px 600px at 10% -10%, rgba(124,58,237,0.22), transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(6,182,212,0.12), transparent 60%),
+                  var(--bg);
+                min-height: 100vh;
+            }
+            .container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+            .panel {
+                background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.00));
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow);
+                padding: 22px;
+            }
+            .title { margin: 0 0 14px; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+            .muted { color: var(--muted); margin: 0 0 20px; }
+            .control { display: flex; align-items: center; gap: 12px; }
+            input[type="file"] {
+                color: var(--text);
+                background: #0b1220;
+                border: 1px solid var(--border);
+                padding: 10px 12px;
+                border-radius: 10px;
+            }
+            .preview { margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+            .box { background: #0b1220; border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+            .box h3 { margin: 0 0 10px; color: #cbd5e1; font-size: 16px; }
+            canvas, img { width: 100%; border-radius: 8px; border: 1px solid var(--border); }
+            a { color: #a78bfa; text-decoration: none; }
+        </style>
         <script type="module" src="src/superResolution.ts"></script>
     </head>
     <body>
-        <input type="file" id="upload" accept="image/*" />
-        <br />
+        <div class="container">
+            <div style="margin-bottom: 12px;"><a href="index.html">← 返回主页</a></div>
+            <div class="panel">
+                <h1 class="title">🔍 图像超分辨率</h1>
+                <p class="muted">上传一张图片，使用浏览器侧推理进行放大与细节增强。</p>
+                <div class="control">
+                    <input type="file" id="upload" accept="image/*" />
+                </div>
+                <div class="preview" style="margin-top: 18px;">
+                    <div class="box">
+                        <h3>原图预览</h3>
+                        <img id="srcPreview" alt="source" />
+                    </div>
+                    <div class="box">
+                        <h3>超分结果</h3>
+                        <canvas id="dstCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
     </body>
 </html>

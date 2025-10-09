@@ -4,55 +4,72 @@
         <meta charset="UTF-8" />
         <title>AnimeGANv3 Demo</title>
         <style>
+            * { box-sizing: border-box; }
+            :root {
+                --bg: #0b0f17; --panel: #0f172a; --border: rgba(148,163,184,0.14);
+                --text: #e5e7eb; --muted: #94a3b8; --accent: #06b6d4; --accent-2: #7c3aed;
+                --radius: 14px; --shadow: 0 12px 40px rgba(0,0,0,0.55);
+            }
             body {
-                font-family: sans-serif;
-                padding: 16px;
+                margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                color: var(--text);
+                background:
+                  radial-gradient(1000px 600px at 10% -10%, rgba(124,58,237,0.18), transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(6,182,212,0.12), transparent 60%),
+                  var(--bg);
+                padding: 22px;
             }
-            #container {
-                display: flex;
-                gap: 16px;
-                margin-top: 16px;
-            }
-            video,
-            canvas {
-                width: 100%;
-                border: 1px solid #ccc;
-            }
-            button {
-                margin-right: 8px;
-            }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+            .title { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.02em; }
+            a { color: #a78bfa; text-decoration: none; }
+            .panel { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.00)); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px; }
+            .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+            input[type="file"], input[type="range"], button { background: #0b1220; color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+            button { background: linear-gradient(135deg, #06b6d4, #7c3aed); font-weight: 700; cursor: pointer; }
+            button:hover { filter: brightness(1.05); }
+            label { color: var(--muted); margin-right: 6px; }
+            #container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 16px; }
+            .box { background: #0b1220; border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+            .box h3 { margin: 0 0 10px; color: #cbd5e1; font-size: 16px; }
+            video, canvas { width: 100%; border-radius: 8px; border: 1px solid var(--border); background: #0f172a; }
+            #progressInfo { margin-top: 8px; display: none; color: var(--muted); }
         </style>
     </head>
     <body>
-        <h1>AnimeGANv3 Video Cartoonizer</h1>
-
-        <input type="file" id="videoUpload" accept="video/mp4" />
-        <button id="loadModel">加载模型</button>
-        <button id="start">开始卡通化</button>
-        <button id="pauseResume" style="display: none;">暂停处理</button>
-        
-        <div style="margin-top: 16px;">
-            <label for="qualitySlider">卡通化强度: </label>
-            <input type="range" id="qualitySlider" min="0.5" max="1.5" step="0.1" value="1.0" style="width: 200px;">
-            <span id="qualityValue">1.0</span>
-        </div>
-        
-        <div id="progressInfo" style="margin-top: 8px; display: none;">
-            <div>处理进度: <span id="progressText">0 帧</span></div>
-            <div>处理速度: <span id="speedText">0 FPS</span></div>
-        </div>
-
-        <div id="container">
-            <div>
-                <h3>原始视频</h3>
-                <video id="video" controls></video>
+        <div class="container">
+            <div class="header">
+                <h1 class="title">🎬 视频卡通化（实验）</h1>
+                <a href="index.html">← 返回主页</a>
             </div>
-            <div>
-                <h3>卡通化结果</h3>
-                <canvas id="canvas"></canvas>
+            <div class="panel">
+                <div class="controls">
+                    <input type="file" id="videoUpload" accept="video/mp4" />
+                    <button id="loadModel">加载模型</button>
+                    <button id="start">开始卡通化</button>
+                    <button id="pauseResume" style="display: none;">暂停处理</button>
+                    <div style="display:flex; align-items:center; gap:8px; margin-left: 10px;">
+                        <label for="qualitySlider">卡通化强度</label>
+                        <input type="range" id="qualitySlider" min="0.5" max="1.5" step="0.1" value="1.0" style="width: 200px;">
+                        <span id="qualityValue">1.0</span>
+                    </div>
+                </div>
+                <div id="progressInfo">
+                    <div>处理进度: <span id="progressText">0 帧</span></div>
+                    <div>处理速度: <span id="speedText">0 FPS</span></div>
+                </div>
+                <div id="container">
+                    <div class="box">
+                        <h3>原始视频</h3>
+                        <video id="video" controls></video>
+                    </div>
+                    <div class="box">
+                        <h3>卡通化结果</h3>
+                        <canvas id="canvas"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
-
         <script type="module" src="src/video.ts"></script>
     </body>
 </html>
