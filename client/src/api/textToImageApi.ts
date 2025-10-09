@@ -8,6 +8,7 @@ export interface TextToImageRequest {
     prompt: string;
     image?: string | string[];
     size: string;
+    max_images?: number;
 }
 
 export interface TextToImageResponse {
@@ -53,7 +54,8 @@ export class TextToImageApiService {
     async generateImage(
         prompt: string,
         imageUrl?: string | string[],
-        size: string = '2K'
+        size: string = '2K',
+        maxImages: number = 1
     ): Promise<TextToImageResponse> {
         if (!prompt.trim()) {
             throw new Error('请输入文字描述');
@@ -62,7 +64,8 @@ export class TextToImageApiService {
         const requestData: TextToImageRequest = {
             model: this.defaultModel,
             prompt: prompt.trim(),
-            size: size
+            size: size,
+            max_images: Math.min(5, Math.max(1, Math.trunc(maxImages)))
         };
 
         // 如果有参考图片，添加到请求中（支持单个或多个URL）

@@ -9,6 +9,7 @@ class TextToImageApp {
     private promptInput!: HTMLTextAreaElement;
     private imageUrlInput!: HTMLTextAreaElement;
     private sizeSelect!: HTMLSelectElement;
+    private maxImagesSelect!: HTMLSelectElement;
     private generateBtn!: HTMLButtonElement;
     private previewGrid!: HTMLElement;
     private mainContent!: HTMLElement;
@@ -35,6 +36,7 @@ class TextToImageApp {
             "imageUrl"
         ) as HTMLTextAreaElement;
         this.sizeSelect = document.getElementById("size") as HTMLSelectElement;
+        this.maxImagesSelect = document.getElementById("maxImages") as HTMLSelectElement;
         this.generateBtn = document.getElementById(
             "generateBtn"
         ) as HTMLButtonElement;
@@ -126,6 +128,7 @@ class TextToImageApp {
         this.promptInput.value = "";
         this.imageUrlInput.value = "";
         this.sizeSelect.value = "2K";
+        if (this.maxImagesSelect) this.maxImagesSelect.value = "1";
 
         // 重置预览
         UIComponents.resetImagePreview(this.previewGrid);
@@ -170,14 +173,33 @@ class TextToImageApp {
                 await textToImageApi.generateImage(
                     finalPrompt,
                     (imageUrlLines.length > 0 ? imageUrlLines : undefined) as any,
-                    this.sizeSelect.value
+                    this.sizeSelect.value,
+                    this.maxImagesSelect ? parseInt(this.maxImagesSelect.value, 10) || 1 : 1
                 );
 
             // 处理响应
             if (response.data && response.data.length > 0) {
-                const imageUrl = response.data[0].url;
-                this.currentImageUrl = imageUrl;
-                UIComponents.updateImagePreview(imageUrl, this.previewGrid);
+                // 渲染多图网格
+                const itemsHtml = response.data
+                    .map((item, idx) => {
+                        const safeUrl = item.url
+                            .replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;");
+                        return `
+                        <div class="preview-item">
+                            <h3>${response.data.length > 1 ? `生成的图像 #${idx + 1}` : "生成的图像"}</h3>
+                            <div class="preview-image">
+                                <img src="${safeUrl}" alt="generated" style="width: 100%; height: 100%; object-fit: cover; border-radius: 10px;" />
+                            </div>
+                        </div>`;
+                    })
+                    .join("");
+                this.previewGrid.innerHTML = itemsHtml;
+
+                // 操作针对第一张
+                const firstUrl = response.data[0].url;
+                this.currentImageUrl = firstUrl;
                 this.showImageActions();
                 UIComponents.showSuccess("图像生成成功！", this.mainContent);
 
