@@ -72,8 +72,8 @@ export class DeepSeekApiService {
             throw new Error("请输入您想要生成的图像描述");
         }
 
-        // 估算 token：中文场景下可近似按字符数估算，设置安全阈值为 120,000
-        const MAX_TOKENS_SAFE = 120000;
+        // 估算 token：中文场景下可近似按字符数估算，将安全阈值降为原来的一半（60,000）
+        const MAX_TOKENS_SAFE = 60000;
         const CHUNK_OVERLAP = 500; // 适度重叠，减少跨段丢失
 
         const systemPrompt = `你是一个严谨的文学研究助理。请仅从用户提供的小说文本中，提取与用户指定主题直接相关的原文片段（尽量保持原句/原段，不进行改写）。
@@ -107,51 +107,48 @@ export class DeepSeekApiService {
             }
         }
 
-        const extractedParts: string[] = [];
-        for (let i = 0; i < chunks.length; i++) {
-            const part = chunks[i];
-            const partHeader = chunks.length > 1 ? `（第${i + 1}/${chunks.length}段）` : "";
-            try {
-                const response = await fetch(this.proxyBaseUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        model: this.defaultModel,
-                        systemPrompt,
-                        novelText: part,
-                        userPrompt: `主题：${userPrompt}${partHeader}`,
-                        stream: false,
-                    }),
+        // 并发请求所有片段，保持结果顺序
+        const promises = chunks.map((part, index) => {
+            const partHeader = chunks.length > 1 ? `（第${index + 1}/${chunks.length}段）` : "";
+            return fetch(this.proxyBaseUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    model: this.defaultModel,
+                    systemPrompt,
+                    novelText: part,
+                    userPrompt: `主题：${userPrompt}${partHeader}`,
+                    stream: false,
+                }),
+            })
+                .then(async (response) => {
+                    if (!response.ok) {
+                        const errorData: DeepSeekError = await response.json();
+                        throw new Error(
+                            `DeepSeek API错误: ${errorData?.error?.message || response.statusText}`
+                        );
+                    }
+                    const data: DeepSeekResponse = await response.json();
+                    if (!data.choices || data.choices.length === 0) {
+                        throw new Error("DeepSeek API返回数据格式异常");
+                    }
+                    const content = data.choices[0].message.content?.trim() || "";
+                    return { index, content };
+                })
+                .catch((err: unknown) => {
+                    if (err instanceof Error) {
+                        console.error("相关内容提取失败：", err.message);
+                    }
+                    return { index, content: "" };
                 });
+        });
 
-                if (!response.ok) {
-                    const errorData: DeepSeekError = await response.json();
-                    throw new Error(
-                        `DeepSeek API错误: ${
-                            (errorData as any)?.error?.message || response.statusText
-                        }`
-                    );
-                }
-
-                const data: DeepSeekResponse = await response.json();
-                if (data.choices && data.choices.length > 0) {
-                    const content = data.choices[0].message.content?.trim();
-                    if (content) extractedParts.push(content);
-                } else {
-                    throw new Error("DeepSeek API返回数据格式异常");
-                }
-            } catch (error) {
-                if (error instanceof Error) {
-                    // 单段失败不中断整体流程，但记录占位
-                    extractedParts.push("");
-                    console.error("相关内容提取失败：", error.message);
-                    continue;
-                }
-                extractedParts.push("");
-                continue;
-            }
+        const results = await Promise.all(promises);
+        const extractedParts: string[] = new Array(chunks.length).fill("");
+        for (const { index, content } of results) {
+            extractedParts[index] = content;
         }
 
         // 拼接所有片段提取结果
