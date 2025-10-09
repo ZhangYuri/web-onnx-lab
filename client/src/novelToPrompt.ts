@@ -158,7 +158,7 @@ class NovelToPromptModule {
 
     private setLoading(btn: HTMLButtonElement, loading: boolean): void {
         const textSpan = btn.querySelector(".btn-text");
-        const loadingDiv = btn.querySelector(".loading") as HTMLElement | null;
+        const loadingDiv = btn.querySelector(".loading-prompt") as HTMLElement | null;
         if (loading) {
             btn.setAttribute("disabled", "true");
             if (textSpan) textSpan.textContent = "生成中...";
